@@ -1,14 +1,15 @@
 import { useForm } from "react-hook-form";
-import { useCreateProduct } from "../../hooks/useProduct";
-import { useCreateImageCover } from "../../hooks/useImageCover";
+import { useUpdateProduct, useGetProductById } from "../../hooks/useProduct";
+import { useUpdateImageCover } from "../../hooks/useImageCover";
 import { useGetAllCategory } from "../../hooks/useCategory";
-import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 
-const CreateProduct = () => {
-  const navigate = useNavigate();
-  const mutateProduct = useCreateProduct();
-  const mutateImageCover = useCreateImageCover();
+const EditProduct = () => {
+  const { id } = useParams();
+  const { data: product, isLoading: loadingProduct } = useGetProductById(id);
+  const mutateProduct = useUpdateProduct();
+  const mutateImageCover = useUpdateImageCover();
   const [selectedFile, setSelectedFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
 
@@ -17,31 +18,61 @@ const CreateProduct = () => {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
-  } = useForm();
+  } = useForm({
+    defaultValues: {
+      name: "",
+      price: "",
+      stock: "",
+      categoryId: "",
+    },
+  });
+
+  useEffect(() => {
+    if (product) {
+      setValue("name", product.name);
+      setValue("price", product.price);
+      setValue("stock", product.stock);
+      setValue("categoryId", product.categoryId);
+
+      if (product.images && product.images.length > 0) {
+        setImagePreview(`http://localhost:3000${product.images[0].name}`);
+      }
+    }
+  }, [product, setValue]);
 
   const onSubmit = async (data) => {
     try {
-      const productResponse = await mutateProduct.mutateAsync({
-        name: data.name,
-        price: parseFloat(data.price),
-        stock: parseInt(data.stock, 10),
-        categoryId: parseInt(data.categoryId),
-      });
+      const updates = {};
 
-      const productId = productResponse?.id;
+      if (data.name !== product.name) updates.name = data.name;
+      if (parseFloat(data.price) !== product.price)
+        updates.price = parseFloat(data.price);
+      if (parseInt(data.stock, 10) !== product.stock)
+        updates.stock = parseInt(data.stock, 10);
+      if (parseInt(data.categoryId) !== product.categoryId)
+        updates.categoryId = parseInt(data.categoryId);
 
-      if (selectedFile && productId) {
-        const formData = new FormData();
-        formData.append("image", selectedFile);
-        formData.append("productId", productId);
-
-        await mutateImageCover.mutateAsync(formData);
+      if (Object.keys(updates).length > 0) {
+        await mutateProduct.mutateAsync({ id, product: updates });
       }
 
-      navigate("/admin/products");
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append("image", selectedFile);
+        formData.append("productId", product.id);
+        const imageId = product.images[0].id;
+
+        await mutateImageCover.mutateAsync({ id: imageId, formData });
+      } else {
+        console.error(
+          "No se seleccionó un archivo o el ID del producto es indefinido:",
+          product.id
+        );
+      }
     } catch (error) {
-      console.error("Error al crear producto o imagen:", error);
+      console.error("Error actualizando el producto:", error);
     }
   };
 
@@ -54,17 +85,27 @@ const CreateProduct = () => {
     }
   };
 
+  useEffect(() => {
+    return () => {
+      if (imagePreview) URL.revokeObjectURL(imagePreview);
+    };
+  }, [imagePreview]);
+
+  if (loadingProduct) {
+    return <p>Cargando producto...</p>;
+  }
+
   return (
     <form className="p-6 bg-slate-400" onSubmit={handleSubmit(onSubmit)}>
       <div className="flex text-[#111827] flex-col">
         <div className="flex flex-col md:flex-row justify-between items-center">
-          <h1 className="text-3xl md:text-4xl block my-4">Agregar Producto</h1>
+          <h1 className="text-3xl md:text-4xl block my-4">Editar Producto</h1>
           <div className="flex gap-4 items-center justify-center font-bold">
             <button
               type="submit"
               className="bg-blue-500 px-4 py-2 h-8 rounded-md flex items-center text-white"
             >
-              Agregar
+              Actualizar
             </button>
             <Link
               to={"/admin/products"}
@@ -86,7 +127,9 @@ const CreateProduct = () => {
                   {...register("name", { required: true })}
                 />
                 {errors.name && (
-                  <span className="text-red-500">Este campo es requerido</span>
+                  <span className="text-red-500">
+                    Este campo es obligatorio
+                  </span>
                 )}
               </label>
               <label className="flex flex-col gap-2">
@@ -97,7 +140,9 @@ const CreateProduct = () => {
                   {...register("price", { required: true })}
                 />
                 {errors.price && (
-                  <span className="text-red-500">Este campo es requerido</span>
+                  <span className="text-red-500">
+                    Este campo es obligatorio
+                  </span>
                 )}
               </label>
               <label className="flex flex-col gap-2">
@@ -108,20 +153,22 @@ const CreateProduct = () => {
                   {...register("stock", { required: true })}
                 />
                 {errors.stock && (
-                  <span className="text-red-500">Este campo es requerido</span>
+                  <span className="text-red-500">
+                    Este campo es obligatorio
+                  </span>
                 )}
               </label>
               <label className="flex flex-col gap-2">
                 <p className="text-xl">Categoría</p>
-
                 {isLoading ? (
                   <p>Cargando categorías...</p>
                 ) : error ? (
-                  <p>Error al cargar categorías</p>
+                  <p>Error al cargar las categorías</p>
                 ) : (
                   <select
                     className="rounded-sm h-8 text-darkPrimary p-1"
                     {...register("categoryId", { required: true })}
+                    disabled={isLoading}
                   >
                     <option value="">Selecciona una categoría</option>
                     {categories?.map((category) => (
@@ -132,7 +179,9 @@ const CreateProduct = () => {
                   </select>
                 )}
                 {errors.categoryId && (
-                  <span className="text-red-500">Este campo es requerido</span>
+                  <span className="text-red-500">
+                    Este campo es obligatorio
+                  </span>
                 )}
               </label>
             </div>
@@ -143,20 +192,23 @@ const CreateProduct = () => {
               <h2 className="text-3xl mb-4">Imágenes</h2>
               <div className="flex flex-col gap-8 my-8">
                 <label className="flex flex-col gap-2">
-                  Imagen de portada
-                  <input
-                    type="file"
-                    onChange={handleFileChange}
-                    accept="image/*"
-                    className="text-darkPrimary flex text-xl justify-center items-center border h-24 border-darkPrimary"
-                  />
+                  Imagen Actual
                   {imagePreview && (
                     <img
                       src={imagePreview}
-                      alt="Preview"
-                      className="h-24 mt-2"
+                      alt="Vista Previa"
+                      className="w-full h-auto"
                     />
                   )}
+                </label>
+                <label className="flex flex-col gap-2">
+                  <p className="text-xl">Subir Nueva Imagen</p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="rounded-sm h-8 p-1"
+                  />
                 </label>
               </div>
             </div>
@@ -167,4 +219,4 @@ const CreateProduct = () => {
   );
 };
 
-export default CreateProduct;
+export default EditProduct;

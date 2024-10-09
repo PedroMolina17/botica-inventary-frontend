@@ -1,42 +1,48 @@
 import {
   useReactTable,
   getCoreRowModel,
-  getSortedRowModel,
   flexRender,
-  getFilteredRowModel,
 } from "@tanstack/react-table";
-import { useState } from "react";
 import { IoAddCircle } from "react-icons/io5";
 import { MdDeleteOutline } from "react-icons/md";
 import { CiEdit } from "react-icons/ci";
 import { MdPersonSearch } from "react-icons/md";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useGetAllProducts, useDeleteProduct } from "../../hooks/useProduct";
+import { Link, useNavigate } from "react-router-dom";
 
 const AdminProducts = () => {
-  const [sorting, setSorting] = useState([]);
   const [filtering, setFiltering] = useState("");
+  const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({
     pageIndex: 1,
     pageSize: 10,
   });
 
-  const data = {
-    results: [
-      { id: 1, name: "Producto 1", stock: 100 },
-      { id: 2, name: "Producto 2", stock: 50 },
-      { id: 3, name: "Producto 3", stock: 75 },
-      { id: 4, name: "Producto 4", stock: 200 },
-      { id: 5, name: "Producto 5", stock: 150 },
-    ],
-    info: {
-      count: 5,
-    },
-  };
+  const { data, isLoading, isError } = useGetAllProducts();
+  const deleteProductMutation = useDeleteProduct();
+  const navigate = useNavigate();
+
+  if (isError) {
+    return <div>Error loading products.</div>;
+  }
+
+  const fallbackImage = "../../../public/default-fallback.png";
+  const baseURL = "http://localhost:3000";
 
   const columns = [
     {
-      accessorKey: "id",
-      header: "ID",
+      accessorKey: "images",
+      header: "Image",
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <img
+            src={`${baseURL}${row.original.images[0]?.name || fallbackImage}`}
+            alt={row.original.name}
+            className="w-16 h-16 object-cover"
+          />
+        </div>
+      ),
     },
     {
       accessorKey: "name",
@@ -47,36 +53,46 @@ const AdminProducts = () => {
       header: "Stock",
     },
     {
-      header: "Accion",
+      header: "Acción",
+      cell: ({ row }) => (
+        <div className="flex gap-4 items-center justify-center">
+          <button
+            onClick={() => UpdateProductView(row.original.id)}
+            className="text-[#139dba] hover:text-blue-400 text-2xl focus:outline-none transition-colors"
+            aria-label="Editar producto"
+          >
+            <CiEdit className="text-xl" />
+          </button>
+          <button
+            onClick={() => deleteProductMutation.mutate(row.original.id)}
+            className="text-red-500 hover:text-red-700 text-2xl focus:outline-none transition-colors"
+            aria-label="Eliminar producto"
+          >
+            <MdDeleteOutline className="text-xl" />
+          </button>
+        </div>
+      ),
     },
   ];
 
-  const UpdateProductView = (id) => {
-    console.log("Editando producto con ID:", id);
-  };
-
-  const deleteProduct = (id) => {
-    console.log("Eliminando producto con ID:", id);
-  };
-
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const table = useReactTable({
-    data: data.results || [],
+    data: data || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    rowCount: data.info.count || 0,
-    state: {
-      pagination,
-      sorting: sorting,
-      globalFilter: filtering,
-    },
+    state: { pagination, sorting, globalFilter: filtering },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
-    onGlobalFilterChange: setFiltering,
-    getFilteredRowModel: getFilteredRowModel(),
-    manualPagination: true,
-    debugTable: true,
+    getPaginationRowModel: () => {},
   });
+
+  if (isLoading) {
+    return <div>Loading products...</div>;
+  }
+
+  const UpdateProductView = (id) => {
+    navigate(`/admin/products/edit/${id}`);
+  };
 
   return (
     <div className="mx-2 rounded-md">
@@ -111,20 +127,17 @@ const AdminProducts = () => {
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="text-center text-sm p-4 cursor-pointer hover:bg-[#313151] transition-colors"
+                  className={`text-center text-sm p-4 cursor-pointer ${
+                    header.column.getCanSort()
+                      ? "hover:bg-[#313151] transition-colors"
+                      : ""
+                  }`}
                   onClick={header.column.getToggleSortingHandler()}
                 >
                   {flexRender(
                     header.column.columnDef.header,
                     header.getContext()
                   )}
-                  {header.column.getIsSorted() !== null &&
-                  header.column.getIsSorted() !== false
-                    ? {
-                        asc: " ↓",
-                        desc: " ↑",
-                      }[header.column.getIsSorted()]
-                    : null}
                 </th>
               ))}
             </tr>
@@ -138,39 +151,15 @@ const AdminProducts = () => {
                 rowIndex % 2 === 0 ? "bg-[#1e1e35]" : "bg-[#232343]"
               }`}
             >
-              {row.getVisibleCells().map((cell, index) => (
+              {row.getVisibleCells().map((cell) => (
                 <td key={cell.id} className="text-center p-4">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  {index === columns.length - 1 && (
-                    <div className="flex gap-4 items-center justify-center">
-                      <button
-                        onClick={() => UpdateProductView(row.original.id)}
-                        className="text-[#139dba] hover:text-blue-400 text-2xl focus:outline-none transition-colors"
-                        aria-label="Editar producto"
-                      >
-                        <CiEdit className="text-xl" />
-                      </button>
-                      <button
-                        onClick={() => deleteProduct(row.original.id)}
-                        className="text-red-500 hover:text-red-700 text-2xl focus:outline-none transition-colors"
-                        aria-label="Eliminar producto"
-                      >
-                        <MdDeleteOutline className="text-xl" />
-                      </button>
-                    </div>
-                  )}
                 </td>
               ))}
             </tr>
           ))}
         </tbody>
       </table>
-      <div className="flex justify-between items-center w-full mt-4">
-        <span className="text-sm text-gray-400">
-          Mostrando {table.getFilteredRowModel().rows.length} de{" "}
-          {data.info.count} productos
-        </span>
-      </div>
     </div>
   );
 };
