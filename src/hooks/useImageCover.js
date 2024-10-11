@@ -36,7 +36,7 @@ const useCreateImageCover = () => {
   return useMutation({
     mutationFn: (formData) => createImageCover(formData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["imageCover"] });
+      queryClient.invalidateQueries({ queryKey: ["imageCover", "products"] });
     },
   });
 };

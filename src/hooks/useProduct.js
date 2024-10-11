@@ -39,7 +39,7 @@ const useCreateProduct = () => {
     mutationFn: (product) => createProduct(product),
     onSuccess: () => {
       navigate("/admin/products");
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products", "imageCover"] });
     },
   });
 };
@@ -66,7 +66,7 @@ const useUpdateProduct = () => {
     mutationFn: ({ id, product }) => updateProduct(id, product),
     onSuccess: () => {
       navigate("/admin/products");
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products", "imageCover"] });
     },
   });
 };
