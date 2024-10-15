@@ -1,10 +1,33 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import axios from "axios";
+import Cookies from "js-cookie";
 import { FaUserLarge, FaLock } from "react-icons/fa6";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
+
+  const navigate = useNavigate();
+
+  const onSubmit = async (data) => {
+    try {
+      const response = await axios.post("http://localhost:3000/auth/login", {
+        email: data.email,
+        password: data.password,
+      });
+
+      const { access_token } = response.data;
+      Cookies.set("access_token", access_token, { expires: 7 });
+      navigate("/admin");
+      console.log("Inicio de sesión exitoso");
+    } catch (error) {
+      console.error("Error en el inicio de sesión", error);
+    }
+  };
 
   return (
     <>
@@ -19,40 +42,54 @@ function Login() {
             <h2 className="text-white text-3xl lg:text-4xl mb-4 lg:mb-8">
               Inicio
             </h2>
-            <div className="space-y-4 lg:space-y-6 w-full lg:w-2/3 max-w-md">
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="space-y-4 lg:space-y-6 w-full lg:w-2/3 max-w-md"
+            >
               <label className="flex justify-between items-center py-2 border-b-2 border-gray-600 focus-within:border-white">
                 <input
                   type="text"
-                  placeholder="Usuario"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Correo Electrónico"
+                  {...register("email", { required: "El correo es requerido" })}
                   className="bg-transparent text-white border-none focus:outline-none text-lg w-full"
                 />
                 <FaUserLarge />
               </label>
+              {errors.email && (
+                <p className="text-red-500 text-sm">{errors.email.message}</p>
+              )}
 
               <label className="flex justify-between items-center py-2 border-b-2 border-gray-600 focus-within:border-white">
                 <input
                   type="password"
                   placeholder="Contraseña"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  {...register("password", {
+                    required: "La contraseña es requerida",
+                  })}
                   className="bg-transparent text-white border-none focus:outline-none text-lg w-full"
                 />
                 <FaLock />
               </label>
+              {errors.password && (
+                <p className="text-red-500 text-sm">
+                  {errors.password.message}
+                </p>
+              )}
 
-              <button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white text-lg py-3 rounded-full">
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white text-lg py-3 rounded-full"
+              >
                 Iniciar Sesión
               </button>
+            </form>
 
-              <p className="text-gray-400 text-sm">
-                ¿No recuerdas tu Contraseña?
-                <Link to="/recovery" className="text-blue-400 hover:underline">
-                  Recuperar Contraseña
-                </Link>
-              </p>
-            </div>
+            <p className="text-gray-400 text-sm mt-4">
+              ¿No recuerdas tu Contraseña?
+              <Link to="/recovery" className="text-blue-400 hover:underline">
+                Recuperar Contraseña
+              </Link>
+            </p>
           </div>
 
           <div className="w-full lg:w-[40%] flex flex-col justify-center items-center text-white z-10 mt-8 lg:mt-0">
