@@ -1,15 +1,17 @@
 import { IoHomeOutline, IoHomeSharp } from "react-icons/io5";
 import { HiOutlineDocumentReport } from "react-icons/hi";
 import { BiSolidReport } from "react-icons/bi";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { RiMedicineBottleFill, RiMedicineBottleLine } from "react-icons/ri";
 import { useState } from "react";
 import { IoMdMenu } from "react-icons/io";
 import { FaUserAlt } from "react-icons/fa";
 import { CiUser } from "react-icons/ci";
+import Cookies from "js-cookie";
 
 const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const pathname = location.pathname;
   const [isOpen, setIsOpen] = useState(false);
 
@@ -42,6 +44,11 @@ const Sidebar = () => {
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleLogout = () => {
+    Cookies.remove("access_token");
+    navigate("/");
   };
 
   return (
@@ -85,6 +92,14 @@ const Sidebar = () => {
             </div>
           );
         })}
+
+        <div
+          className="w-full h-14 flex items-center p-2 text-lg rounded-md hover:text-white text-[#afafaf] cursor-pointer transition-colors"
+          onClick={handleLogout}
+        >
+          <FaUserAlt className="text-xl" />
+          <span className="ml-2">Cerrar Sesión</span>
+        </div>
       </div>
 
       {isOpen && (
