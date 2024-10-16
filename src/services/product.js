@@ -9,6 +9,21 @@ export const deleteProduct = async (id) => {
   await axiosInstance.delete(`/product/${id}`);
 };
 
+export const countProducts = async () => {
+  const { data } = await axiosInstance.get("/product/count");
+  return data;
+};
+
+export const countUsers = async () => {
+  const { data } = await axiosInstance.get("/users/count");
+  return data;
+};
+
+export const countProductsLower = async () => {
+  const { data } = await axiosInstance.get("/product/low-stock");
+  return data;
+};
+
 export const updateProduct = async (id, data) => {
   await axiosInstance.patch(`/product/${id}`, data);
 };

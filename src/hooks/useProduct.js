@@ -6,6 +6,9 @@ import {
   getProductByName,
   getProductById,
   updateProduct,
+  countProducts,
+  countProductsLower,
+  countUsers,
 } from "../services/product";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
@@ -14,6 +17,27 @@ const useGetAllProducts = () => {
   return useQuery({
     queryKey: ["products"],
     queryFn: () => getAllProducts(),
+  });
+};
+
+const useCountProducts = () => {
+  return useQuery({
+    queryKey: ["productsCount"],
+    queryFn: () => countProducts(),
+  });
+};
+
+const useCountProductsLower = () => {
+  return useQuery({
+    queryKey: ["productsLower"],
+    queryFn: () => countProductsLower(),
+  });
+};
+
+const useCountUsers = () => {
+  return useQuery({
+    queryKey: ["usersCount"],
+    queryFn: () => countUsers(),
   });
 };
 
@@ -78,4 +102,7 @@ export {
   useGetProductByName,
   useGetProductById,
   useUpdateProduct,
+  useCountProducts,
+  useCountProductsLower,
+  useCountUsers,
 };

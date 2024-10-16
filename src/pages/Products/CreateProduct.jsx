@@ -154,7 +154,8 @@ const CreateProduct = () => {
                     <img
                       src={imagePreview}
                       alt="Preview"
-                      className="h-24 mt-2"
+                      className="h-24 mt-2 object-contain"
+                      style={{ width: "100%", maxHeight: "auto" }}
                     />
                   )}
                 </label>

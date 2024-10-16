@@ -8,6 +8,7 @@ import { IoMdMenu } from "react-icons/io";
 import { FaUserAlt } from "react-icons/fa";
 import { CiUser } from "react-icons/ci";
 import Cookies from "js-cookie";
+import { IoExitSharp } from "react-icons/io5";
 
 const Sidebar = () => {
   const location = useLocation();
@@ -48,6 +49,7 @@ const Sidebar = () => {
 
   const handleLogout = () => {
     Cookies.remove("access_token");
+
     navigate("/");
   };
 
@@ -97,7 +99,7 @@ const Sidebar = () => {
           className="w-full h-14 flex items-center p-2 text-lg rounded-md hover:text-white text-[#afafaf] cursor-pointer transition-colors"
           onClick={handleLogout}
         >
-          <FaUserAlt className="text-xl" />
+          <IoExitSharp className="text-xl" />
           <span className="ml-2">Cerrar Sesión</span>
         </div>
       </div>
