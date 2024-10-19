@@ -3,7 +3,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { FaUserLarge, FaLock } from "react-icons/fa6";
 import { Link, useNavigate } from "react-router-dom";
-
+import Swal from "sweetalert2";
 function Login() {
   const {
     register,
@@ -22,10 +22,21 @@ function Login() {
 
       const { access_token } = response.data;
       Cookies.set("access_token", access_token, { expires: 7 });
+      Swal.fire({
+        title: "Success!",
+        text: "Login completed successfully",
+        icon: "success",
+        confirmButtonText: "Great!",
+      });
       navigate("/admin");
-      console.log("Inicio de sesión exitoso");
     } catch (error) {
       console.error("Error en el inicio de sesión", error);
+      Swal.fire({
+        title: "Error!",
+        text: "Password or Email incorrect",
+        icon: "error",
+        confirmButtonText: "Cool",
+      });
     }
   };
 
